@@ -82,9 +82,9 @@ DEFINE CLASS ODBCConnPoolManager AS Custom
 		LOCAL nConn
 		nConn = oPool.Get()
 		THIS.lastError = ""
-		IF nConn < 0
-			THIS.lastError = oConn.lastError
-			RETURN -1
+		IF nConn <= 0
+			THIS.lastError = oPool.lastError
+			RETURN 0
 		ENDIF
 		
 		* ADD THE CONNECTION TO THE INDEX. WE USE THIS INDEX TO 
@@ -308,15 +308,24 @@ DEFINE CLASS OCPMPool AS Custom
 	FUNCTION Get
 		LOCAL oConn,i
 		oConn = NULL
-		
+		THIS.lastError = ""
 		IF THIS.Count < THIS.minPoolSize
-			DIMENSION THIS.aPool[THIS.minPoolSize]
 			FOR i = THIS.Count + 1 TO THIS.minPoolSize
 			    oConn = CREATE("OCPMPoolItem", THIS.connString)
 			    oConn.Open()
+			    IF NOT oConn.Connected
+			    	THIS.lastError = "[CONNECT-ERROR] " + oConn.lastError
+			    	EXIT
+			    ENDIF
 			    oConn.Available = oConn.Connected
+			    IF i = (THIS.Count + 1)
+			    	DIMENSION THIS.aPool[THIS.minPoolSize]
+			    ENDIF
 				THIS.aPool[i] = oConn 
 			ENDFOR
+			IF !EMPTY(THIS.lastError)
+				RETURN 0
+			ENDIF
 			THIS.Count = THIS.minPoolSize
 		ENDIF
 		

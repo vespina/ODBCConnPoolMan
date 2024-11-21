@@ -1,6 +1,10 @@
-close all
-clear all
-clear
+* TEST.PRG
+* ODBC COnnection Manager test
+*
+CLOSE ALL
+CLEAR ALL
+CLEAR
+
 
 SET PROC TO ODBCConnPoolMan
 
@@ -8,78 +12,94 @@ SET PROC TO ODBCConnPoolMan
 SET MEMOWIDTH TO 200
 
 
-* DEFINA DOS CADENAS DE CONEXION DISTINTAS
+* DEFINE A COUPLE OF VALID CONNECTION STRINGS
 LOCAL cConnStr1,cConnStr2
 cConnStr1 = "Driver={SQL Server};server=valar;uid=sa;pwd=sa**2019;database=dnpsa;"
 cConnStr2 = "Driver={SQL Server};server=valar;uid=sa;pwd=sa**2019;database=easymaxsync;"
 
-* DEFINA UNA CADENA ADICIONAL QUE SEA INCORRECTA
+* DEFINE AN INVALID CONNECTION STRING
 LOCAL cConnStr3
 cConnStr3 = "server=foo;"
 
 
-* INSTANCIAMOS LA CLASE
+* INITIALIZE MANAGER 
 LOCAL oCPM
 oCPM = CREATE("ODBCConnPoolManager")
-oCPM.autoCleanup = .F.   && DESACTIVAMOS LA FUNCION DE AUTOCLEANUP
-oCPM.maxLifeSpan = 1     && FIJAMOS EL TIEMPO MAXIMO DE OCIO DE UNA CONEXION EN 1 MIN
+oCPM.autoCleanup = .F.   && DEACTIVATE AUTO-CLEANUP FOR TESTING
+oCPM.maxLifeSpan = 1     && SET CONNECTION MAX LIFE SPAN TO 1 MIN
+
+?"ODBC Connection Pool Manager " + oCPM.Version
+?"TEST PROGRAM"
+?
 
 
-* CREAMOS ALGUNAS CONEXIONES CON LOS CONNSTRING VALIDOS (1 Y 2)
-?"* Obteniendo conexion (connStr1): ",oCPM.Connect(cConnStr1)
-?"* Obteniendo conexion (connStr1): ",oCPM.Connect(cConnStr1)
+* CREATE SOME VALID CONNECTIONS
+?"* Getting connection (connStr1): ",oCPM.Connect(cConnStr1)
+?"* Getting connection (connStr1): ",oCPM.Connect(cConnStr1)
 
 LOCAL nConn2
 nConn2 = oCPM.Connect(cConnStr2)
-?"* Obteniendo conexion (connStr2): ",nConn2
+?"* Getting connection (connStr2): ",nConn2
 
-* MOSTRAMOS EL ESTADO DEL POOL MANAGER
+
+* SHOW MANAGER STATE
 MESSAGEBOX(oCPM.toString(),0,"TEST 1")
 
 
-* CERRAMOS UNA CONEXION. LA CONEXION EN SI SE MANTENDRA ABIERTA
-* PERO SERA MARCADA COMO DISPONIBLE ([A])
-?"* Cerrando conexion",nConn2
+* CLOSE A CONNECTION. THE CONNECTION ITSELF REMAINS OPEN
+* BUT FLAGGED AS [A]VAILABLE
+?"* Closing connection",nConn2
 oCPM.Disconnect(nConn2)
 
-* MOSTRAMOS EL ESTADO DEL POOL MANAGER
+* SHOW MANAGER STATE
 MESSAGEBOX(oCPM.toString(),0,"TEST 2")
 
-* AHORA SOLICITAMOS UNA NUEVA CONEXION PARA LA CADENA DE CONEXION
-* ASOCIADA CON LA CONEXION QUE ACABAMOS DE CERRAR.  NOS DEBE 
-* DEVOLVER EL MISMO ID DE CONEXION QUE TENIAMOS ANTES
-?"* Obteniendo conexion (connStr2): ",oCPM.Connect(cConnStr2)
+* GET A NEW CONNECTION FROM THE SAME CONNECTION STRING SO WE
+* CAN CHECK WE GET THE SAME CONNECTION ID 
+?"* Getting connection (connStr2): ",oCPM.Connect(cConnStr2)
 
-* MOSTRAMOS EL ESTADO DEL POOL MANAGER
+* SHOW MANAGER STATE
 MESSAGEBOX(oCPM.toString(),0,"TEST 3")
 
 
-* CERRAMOS DE NUEVO LA CONEXION Y ACTIVAMOS LA FUNCION DE AUTOCLEANUP
-?"* Cerrando conexion",nConn2
+* NOW WE CLOSE THE LAST CONNECTION AGAIN AND ACTIVATE AUTO-CLEANUP FEATURE
+?"* Closing connection",nConn2
 oCPM.Disconnect(nConn2)
 
-?"* Activando funcion auto-cleanup..."
+?"* Activating auto-cleanup..."
 oCPM.autoCleanupInterval = 1.5
 oCPM.autoCleanup = .T.
 ??"Done!"
 
-?"* Esperando 90s por auto-cleanup..."
+?"* Waiting 90s for auto-cleaning (press any key to abort)..."
 INKEY(95,'H')
 ??"Done!"
 
-* MOSTRAMOS EL ESTADO DEL POOL MANAGER
+* SHOW MANAGER STATE
 MESSAGEBOX(oCPM.toString(),0,"TEST 4")
 
 
-* REINICIAMOS EL MANAGER.  AL HACER ESTO SE CIERRAN TODAS LAS CONEXIONES
-* Y SE LIMPIAN TODOS LOS POOLS
-?"* CErrando todas las conexiones"
+* RESET MANAGER. ALL CONNECTIONS & POOLS WILL BE CLOSED
+?"* Closing all connections in all pools"
 oCPM.Reset()
 
-* MOSTRAMOS EL ESTADO DEL POOL MANAGER
+* SHOW MANAGER STATE
 MESSAGEBOX(oCPM.toString(),0,"TEST 5")
 
 
-* FINALIZAMOS EL MANAGER (IMPORTANTE)
+* SHOW ERROR HANDLING
+?"* Getting a connection (invalid conn string)..."
+nConn2 = oCPM.Connect(cConnStr3)
+IF nConn2 = 0
+	??oCPM.lastError
+ENDIF
+
+
+* CLEANUP MANAGER
+?"* Cleaning up..."
 oCPM.Dispose()
+oCPM = NULL
+??"Done!"
+
+
 
