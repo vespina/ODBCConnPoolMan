@@ -25,6 +25,9 @@ Author : Victor Espina
 
     LOCAL nConn
     nConn = goCPM.Connect("connection-string")
+    IF nConn = 0 
+    	MESSAGEBOX(goCPM.lastError)
+    ENDIF
     
 #### RELEASE A CONNECTION
 
