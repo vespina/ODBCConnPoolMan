@@ -1,11 +1,12 @@
 # ODBCConnPoolMan
 ODBC Connection Pools Manager for VFP6+
 
-Version: 1.0
-Author : Victor Espina
+    Version: 1.0
+    Author : Victor Espina
 
 
-### HOW TO USE
+#### OBJECTIVE
+This class allows for ODBC connections reuse accros yor app.
 
 
 #### INITIALIZATION
