@@ -1,5 +1,5 @@
 # ODBCConnPoolMan
-ODBC Connection Pools Manager
+ODBC Connection Pools Manager for VFP6+
 
 Version: 1.0
 Author : Victor Espina
